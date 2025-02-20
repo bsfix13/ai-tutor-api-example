@@ -19,39 +19,42 @@ export default function Home() {
     const [tokenResponse, setTokenResponse] = useState<TokenResponse | null>(null);
     const [tokenLoading, setTokenLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!story.trim()) {
-            setError('Please enter a story');
-            return;
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!story.trim()) {
+        setError('Please enter a story prompt.');
+        return;
+    }
+    setError('');
+    setLoading(true);
+    setResult(null);
+
+    try {
+        const response = await fetch('/api/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ story }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            setResult(data);
+            setError('');
+        } else {
+            // More informative error message
+            setError(data.error || `API request failed with status ${response.status}`);
         }
-        setError('');
-        setLoading(true);
-        setResult(null);
-
-        try {
-            const response = await fetch('/api/run', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ story }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setResult(data);
-                setError('');
-            } else {
-                setError(data.error || 'An error occurred while fetching the story.');
-            }
-        } catch (err) {
-            setError('An error occurred while fetching the story.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    } catch (err: any) {
+        // More specific error handling
+        setError(`An error occurred: ${err.message}`);
+        console.error("Fetch error:", err);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleGetToken = async () => {
         setTokenLoading(true);
